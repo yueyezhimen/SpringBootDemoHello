@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<script src='tinymce.min.js'></script>
+		<link rel="stylesheet" href="../layuiadmin/layui/css/layui.css" media="all">
+		<link rel="stylesheet" href="../layuiadmin/style/admin.css" media="all">
+		<script src="../layuiadmin/layui/layui.js"></script>
+		<script src="../layuiadmin/js/jquery.min.js"></script>
+		<script src="../layuiadmin/js/md5.min.js"></script>
+		<script>
+			layui.use('form', function() {
+				var form = layui.form;
+
+				tinymce.init({
+					selector: '#mytextarea',
+					//skin:'oxide-dark',
+					language: 'zh_CN',
+					// plugins: 'print preview searchreplace autolink directionality visualblocks visualchars fullscreen image link media template code codesample table charmap hr pagebreak nonbreaking anchor insertdatetime advlist lists wordcount imagetools textpattern help emoticons autosave bdmap indent2em autoresize formatpainter axupimgs',
+					// toolbar: 'code undo redo restoredraft | cut copy paste pastetext | forecolor backcolor bold italic underline strikethrough link anchor | alignleft aligncenter alignright alignjustify outdent indent | \
+					//   styleselect formatselect fontselect fontsizeselect | bullist numlist | blockquote subscript superscript removeformat | \
+					//   table image media charmap emoticons hr pagebreak insertdatetime print preview | fullscreen | bdmap indent2em lineheight formatpainter axupimgs',
+					plugins: 'print preview searchreplace  directionality visualblocks visualchars fullscreen image media template code codesample table charmap hr pagebreak nonbreaking anchor insertdatetime advlist lists wordcount imagetools textpattern help emoticons autosave bdmap indent2em autoresize formatpainter axupimgs',
+					toolbar: 'code undo redo restoredraft | cut copy paste pastetext | forecolor backcolor bold italic underline strikethrough anchor | alignleft aligncenter alignright alignjustify outdent indent | \
+				styleselect formatselect fontselect fontsizeselect | bullist numlist | blockquote subscript superscript removeformat | \
+				table image media charmap emoticons hr pagebreak insertdatetime print preview | fullscreen | bdmap indent2em lineheight formatpainter axupimgs',
+					height: 650, //编辑器高度
+					min_height: 400,
+					/*content_css: [ //可设置编辑区内容展示的css，谨慎使用
+					    '/static/reset.css',
+					    '/static/ax.css',
+					    '/static/css.css', 
+					],*/
+					fontsize_formats: '12px 14px 16px 18px 24px 36px 48px 56px 72px',
+					font_formats: '微软雅黑=Microsoft YaHei,Helvetica Neue,PingFang SC,sans-serif;苹果苹方=PingFang SC,Microsoft YaHei,sans-serif;宋体=simsun,serif;仿宋体=FangSong,serif;黑体=SimHei,sans-serif;Arial=arial,helvetica,sans-serif;Arial Black=arial black,avant garde;Book Antiqua=book antiqua,palatino;',
+					link_list: [{
+							title: '预置链接1',
+							value: 'http://www.tinymce.com'
+						},
+						{
+							title: '预置链接2',
+							value: 'http://tinymce.ax-z.cn'
+						}
+					],
+					image_list: [{
+							title: '预置图片1',
+							value: 'https://www.tiny.cloud/images/glyph-tinymce@2x.png'
+						},
+						{
+							title: '预置图片2',
+							value: 'https://www.baidu.com/img/bd_logo1.png'
+						}
+					],
+					image_class_list: [{
+							title: 'None',
+							value: ''
+						},
+						{
+							title: 'Some class',
+							value: 'class-name'
+						}
+					],
+					paste_data_images: true, //图片是否可粘贴
+					//此处为图片上传处理函数
+					importcss_append: true,
+					//自定义文件选择器的回调内容
+					file_picker_callback: function(callback, value, meta) {
+						//文件分类
+						var filetype =
+							'.pdf, .txt, .zip, .rar, .7z, .doc, .docx, .xls, .xlsx, .ppt, .pptx, .mp3, .mp4';
+						//后端接收上传文件的地址
+						var upurl = 'http://localhost:8080/SpringBootPingPong/editor/uploadFile';
+						//为不同插件指定文件类型及后端地址
+						switch (meta.filetype) {
+							case 'image':
+								filetype = '.jpg, .jpeg, .png, .gif';
+								break;
+							case 'media':
+								filetype = '.mp3, .mp4';
+								break;
+							case 'file':
+							default:
+						}
+						//模拟出一个input用于添加本地文件
+						var input = document.createElement('input');
+						input.setAttribute('type', 'file');
+						input.setAttribute('accept', filetype);
+						input.click();
+						input.onchange = function() {
+							var file = this.files[0];
+							var xhr, formData;
+							console.log(file.name);
+							console.log(file.size);
+							if (meta.filetype == 'image') {
+								//1m
+								if (file.size > 2048576) {
+									console.log(file.size);
+									layer.msg('大小超过2MB，请压缩！', {
+										icon: 0
+									})
+								}
+							}
+							if (meta.filetype == 'media') {
+								//10m
+								if (file.size > 10485760) {
+									console.log(file.size);
+									layer.msg('大小超过10MB，请压缩！', {
+										icon: 0
+									})
+								}
+
+							}
+							xhr = new XMLHttpRequest();
+							xhr.withCredentials = false;
+							xhr.open('POST', upurl);
+							xhr.onload = function() {
+								var json;
+								if (xhr.status != 200) {
+									console.log(xhr.status)
+									return;
+								}
+								json = JSON.parse(xhr.responseText);
+								if (!json || typeof json.location != 'string') {
+									console.log('Invalid JSON: ' + xhr.responseText)
+									var resultJson = JSON.parse(xhr.responseText);
+									if (resultJson.code == 1) {
+										var path = resultJson.data.path;
+										callback("../" + path);
+									}
+									return;
+								}
+								callback(json.location);
+							};
+							formData = new FormData();
+							formData.append('file', file, file.name);
+							xhr.send(formData);
+
+							//下方被注释掉的是官方的一个例子
+							//放到下面给大家参考
+
+							/*var reader = new FileReader();
+				            reader.onload = function () {
+				                // Note: Now we need to register the blob in TinyMCEs image blob
+				                // registry. In the next release this part hopefully won't be
+				                // necessary, as we are looking to handle it internally.
+				                var id = 'blobid' + (new Date()).getTime();
+				                var blobCache =  tinymce.activeEditor.editorUpload.blobCache;
+				                var base64 = reader.result.split(',')[1];
+				                var blobInfo = blobCache.create(id, file, base64);
+				                blobCache.add(blobInfo);
+				
+				                // call the callback and populate the Title field with the file name
+				                callback(blobInfo.blobUri(), { title: file.name });
+				            };
+				            reader.readAsDataURL(file);*/
+						};
+					},
+					toolbar_sticky: true,
+					autosave_ask_before_unload: false,
+				});
+			});
+		</script>
+	</head>
+
+	<body>
+		<div class="layui-card">
+			<div class="layui-card-header">折叠面板</div>
+			<div class="layui-card-body">
+				<div class="layui-collapse" lay-filter="component-panel">
+					<div class="layui-colla-item">
+						<form method="post">
+							<textarea id="mytextarea">Hello, World!</textarea>
+						</form>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>

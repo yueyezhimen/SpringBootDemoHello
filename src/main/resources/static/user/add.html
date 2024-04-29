@@ -1,0 +1,142 @@
+
+
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="utf-8">
+  <title>设置我的资料</title>
+  <meta name="renderer" content="webkit">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="../../layuiadmin/layui/css/layui.css" media="all">
+  <link rel="stylesheet" href="../../layuiadmin/style/admin.css" media="all">
+</head>
+<body>
+
+  <div class="layui-fluid">
+    <div class="layui-row layui-col-space15">
+      <div class="layui-col-md12">
+        <div class="layui-card">
+          <div class="layui-card-header">设置我的资料</div>
+          <div class="layui-card-body" pad15>
+            <div class="layui-form" lay-filter="">
+              <div class="layui-form-item">
+                <label class="layui-form-label">我的角色</label>
+                <div class="layui-input-inline" readonly>
+					<input type="text" name="show"  disabled="disabled" value="管理员" readonly class="layui-input">
+					<input type="hidden" name="root" value="0" readonly class="layui-input">
+					<input type="hidden" name="password" th:value="${password}" class="layui-input">
+                  </select> 
+                </div>
+                <div class="layui-form-mid layui-word-aux">当前角色不可更改为其它角色</div>
+              </div>
+              <div class="layui-form-item">
+                <label class="layui-form-label">用户名</label>
+                <div class="layui-input-inline">
+                  <input type="text" name="username" lay-verify="required"  class="layui-input">
+                </div>
+                <div class="layui-form-mid layui-word-aux">用于后台登入名</div>
+              </div>
+              <div class="layui-form-item">
+                <label class="layui-form-label">俱乐部名称</label>
+                <div class="layui-input-inline">
+                  <input type="text" name="nickname"  lay-verify="required" autocomplete="off" placeholder="请输入昵称" class="layui-input">
+                </div>
+				<div class="layui-form-mid layui-word-aux">用于小程序，导出表格等显示</div>
+              </div>
+              <div class="layui-form-item">
+                <label class="layui-form-label">手机</label>
+                <div class="layui-input-inline">
+                  <input type="text" name="telephone"  lay-verify="phone" autocomplete="off" class="layui-input">
+                </div>
+              </div>
+              <div class="layui-form-item">
+                <label class="layui-form-label">邮箱</label>
+                <div class="layui-input-inline">
+                  <input type="text" name="email" lay-verify="email" autocomplete="off" class="layui-input">
+                </div>
+              </div>
+			  <div class="layui-form-item">
+			    <label class="layui-form-label">住址</label>
+			    <div class="layui-input-inline">
+			      <input type="text" name="address" maxlength="150"  lay-verify="address" autocomplete="off" class="layui-input">
+			    </div>
+			  </div>
+              <div class="layui-form-item layui-form-text">
+                <label class="layui-form-label">备注</label>
+                <div class="layui-input-block">
+                  <textarea name="remark" maxlength="150" placeholder="请输入内容" class="layui-textarea"></textarea>
+                </div>
+              </div>
+              <div class="layui-form-item">
+                <div class="layui-input-block">
+                  <button class="layui-btn" lay-submit lay-filter="setmyinfo">确认添加</button>
+<!--                  <button type="reset" class="layui-btn layui-btn-primary">重新填写</button> -->
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../../layuiadmin/layui/layui.js"></script>  
+  <script src="../../layuiadmin/js/jquery.min.js"></script>
+  <script src="../../layuiadmin/js/md5.min.js"></script>
+  <script>
+	var base_path = "../"
+    layui.use('form', function(){
+        var form = layui.form;
+        //设置我的资料
+        form.on('submit(setmyinfo)', function(obj){
+			delete obj.field.show
+		// obj.field.root = 1;
+          //请求登入接口
+          $.ajax({
+            type: 'post',
+            url: base_path + 'addByIdNoReUsername' //实际使用请改成服务端真实接口
+            ,data: obj.field
+            ,success: function(res){
+              // //请求成功后，写入 access_token
+              // layui.data(setter.tableName, {
+              //   key: setter.request.tokenName
+              //   ,value: res.data.access_token
+              // }); 
+              if(res.request == true){
+                if(res.code == -1){
+                  layer.msg('修改失败',{
+                    icon: 0
+                  })
+                }else if(res.code == 1 ){
+                  //登入成功的提示与跳转
+                  layer.msg('增加成功！', {
+                    icon: 1
+                    ,time: 1000
+                  }, function(){
+                    var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+                            parent.layer.close(index); //再执行关闭
+                  });
+                }else if(res.code == -2 ){
+                  //登入成功的提示与跳转
+                  layer.msg('用户名重复，已有此用户名',{
+                    icon: 0
+                  })
+                }else{
+                  //登入成功的提示与跳转
+                  layer.msg('未知错误！', {
+                    icon: 0
+                  });
+                }
+              }
+          
+            }
+          });
+          return false;
+        });
+    });
+
+  </script>
+</body>
+</html>

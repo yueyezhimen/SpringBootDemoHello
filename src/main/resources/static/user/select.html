@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+	<head>
+		<meta charset="utf-8">
+		<title>layuiAdmin 网站用户</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport"
+			content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../layuiadmin/layui/css/layui.css" media="all">
+		<link rel="stylesheet" href="../layuiadmin/style/admin.css" media="all">
+	</head>
+	<body>
+
+		<div class="layui-fluid">
+			<div class="layui-card">
+				<div class="layui-form layui-card-header layuiadmin-card-header-auto">
+					<div class="layui-form-item">
+						<div class="layui-inline">
+							<label class="layui-form-label">用户名</label>
+							<div class="layui-input-block">
+								<input type="text" name="username" placeholder="请输入" autocomplete="off"
+									class="layui-input">
+							</div>
+						</div>
+						<div class="layui-inline">
+							<label class="layui-form-label">昵称</label>
+							<div class="layui-input-block">
+								<input type="text" name="nickname" placeholder="请输入" autocomplete="off"
+									class="layui-input">
+							</div>
+						</div>
+						<div class="layui-inline">
+							<label class="layui-form-label">电话</label>
+							<div class="layui-input-block">
+								<input type="text" name="telephone" placeholder="请输入" autocomplete="off"
+									class="layui-input">
+							</div>
+						</div>
+						<div class="layui-inline">
+							<button class="layui-btn layuiadmin-btn-useradmin" lay-submit
+								lay-filter="LAY-user-front-search">
+								<i class="layui-icon layui-icon-search layuiadmin-button-btn"></i>
+							</button>
+						</div>
+					</div>
+				</div>
+
+				<div class="layui-card-body">
+					<div style="padding-bottom: 10px;">
+						<button class="layui-btn layuiadmin-btn-useradmin" data-type="clear">清空选择</button>
+					</div>
+					<script type="text/html" id="buttonTpl">
+					{{# if(d.delFlag == 0){ }}
+						<button class="layui-btn layui-btn-xs">未冻结</button>
+						{{# } else { }}
+							<button class="layui-btn layui-btn-primary layui-btn-xs">已冻结</button>
+							{{# } }}
+					</script>
+					<table id="LAY-user-manage" lay-filter="LAY-user-manage"></table>
+					<div id="test1"></div>
+					<script type="text/html" id="table-useradmin-webuser">
+						<a class="layui-btn  layui-btn-xs" lay-event="select">选取</a>
+					</script>
+				</div>
+			</div>
+		</div>
+		<script src="../layuiadmin/layui/layui.js"></script>
+		<script src="../layuiadmin/js/jquery.min.js"></script>
+		<script src="../layuiadmin/layui/layui.js"></script>
+		<script>
+			var base_path = ""
+			layui.config({
+				base: '../layuiadmin/' //静态资源所在路径
+			}).extend({
+				index: 'lib/index' //主入口模块
+			}).use(['index', 'table'], function() {
+				var $ = layui.$,
+					form = layui.form,
+					table = layui.table;
+				var statue = {
+					isAsc: true,
+					lastMaxId: 0,
+					lastMinId: 0,
+					//
+					lastCurrent: -1,
+					lastSize: 0,
+				}
+				//用户管理
+				var index = 1;
+				table.render({
+					elem: '#LAY-user-manage',
+					url: base_path + 'pagebyid', //模拟接口
+					request: {
+						pageName: 'current', //页码字段，默认：page
+						limitName: 'size' //每页数据量字段，默认：limit
+					},
+					where: statue,
+					cols: [
+						[{
+								type: 'checkbox',
+								fixed: 'left'
+							},
+							{
+								field: 'id',
+								width: 100,
+								title: 'id',
+								sort: true
+							}, {
+								field: 'username',
+								title: '用户名'
+							}, {
+								field: 'nickname',
+								title: '昵称'
+							}, {
+								field: 'telephone',
+								title: '手机'
+							}, {
+								field: 'email',
+								title: '邮箱'
+							}, {
+								field: 'address',
+								title: '住址'
+							}, {
+								field: 'remark',
+								title: '备注'
+							}, {
+								field: 'delFlag',
+								title: '是否冻结',
+								width: 100,
+								templet: '#buttonTpl',
+								align: 'center'
+							}, {
+								title: '操作',
+								width: 300,
+								align: 'center',
+								fixed: 'right',
+								toolbar: '#table-useradmin-webuser'
+							}
+						],
+					],
+					parseData: function(res) { //将原始数据解析成 table 组件所规定的数据
+						var size = res.data.items.size;
+						var total = res.data.items.total;
+						if (res.data.items.records.length > 0) {
+							var current = res.data.items.current;
+							var lastid = res.data.items.records[0].id;
+							var newid = res.data.items.records[res.data.items.records.length - 1].id;
+							if (current != statue.lastCurrent) {
+								if (lastid > newid) {
+									statue.lastMaxId = lastid;
+									statue.lastMinId = newid;
+								} else {
+									statue.lastMaxId = newid;
+									statue.lastMinId = lastid;
+								}
+								statue.lastCurrent = current;
+								statue.lastSize = size;
+							}
+							return {
+								"code": 0, //解析接口状态
+								"msg": res.msg, //解析提示文本
+								"count": res.data.items.total, //解析数据长度
+								"data": res.data.items.records,
+								//解析数据列表     这里可能需要多次修改，直至可以获取到数据，不然前端表格会一直不显示数据，或者分页失效							};
+							}
+						} else {
+							return {
+								'code': 1, //接口状态
+								'msg': '未查询到数据！', //提示文本
+								'count': 0, //数据长度
+								'data': [] //数据列表，是直接填充进表格中的数组
+							}
+						}
+					},
+					page: true,
+					limit: 10,
+					height: 'full-250',
+					text: '对不起，加载出现异常！',
+				});
+				var reflash = function() {
+					table.reload(
+						'LAY-user-manage', {
+							where: statue
+						}
+					);
+				}
+				var reflash_index = function() {
+					statue.lastCurrent = -1;
+					table.reload(
+						'LAY-user-manage', {
+							where: statue
+						}
+					);
+				}
+				//监听工具条
+				table.on('tool(LAY-user-manage)', function(obj) {
+					var data = obj.data;
+					console.log(obj); //当前页码
+					if (obj.event === 'select') {
+						console.log(data);
+						window.parent.formData = data;
+						var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+						parent.layer.close(index); //再执行关闭
+					}
+				});
+
+
+
+				//监听搜索
+				form.on('submit(LAY-user-front-search)', function(data) {
+					var field = data.field;
+					statue.username = field.username;
+					statue.nickname = field.nickname;
+					statue.telephone = field.telephone;
+					statue.lastCurrent = -1;
+					reflash();
+				});
+
+
+				//事件
+				var active = {
+					clear: function() {
+						var data = {nickname:"",userId:""};
+						window.parent.formData = data;
+						var index = parent.layer.getFrameIndex(window.name); //先得到当前iframe层的索引
+						parent.layer.close(index); //再执行关闭
+					}
+				};
+
+				$('.layui-btn.layuiadmin-btn-useradmin').on('click', function() {
+					var type = $(this).data('type');
+					active[type] ? active[type].call(this) : '';
+				});
+			});
+		</script>
+	</body>
+</html>

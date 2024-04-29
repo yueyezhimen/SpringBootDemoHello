@@ -1,0 +1,1 @@
+import{D as a,E as t}from"./index.5bee6499.js";function e(t,e){return a(t)?e:t}var s={base_path:"/show/",base_path_wx:"/show/",request:function(a={}){a.header={"X-WX-SERVICE":"springboot-rmma","content-type":"application/json"},a.url=this.base_path+a.url,t(a)}};export{s as c,e as r};
